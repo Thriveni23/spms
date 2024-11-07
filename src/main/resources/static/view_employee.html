@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Employee</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #searchForm {
+            width: 50%;
+            margin: 0 auto;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .delete-button, .edit-button {
+            padding: 6px 12px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-button {
+            background-color: #4CAF50;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #ff0000;
+            margin-top: 20px;
+        }
+
+       .back-icon {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<a href="index.html" class="back-icon">&#8592;</a>
+<h1>Employee Search</h1>
+<form id="searchForm">
+    <input type="text" id="query" name="query" placeholder="Enter Employee name">
+    <button type="button" onclick="searchEmployees()">Search</button>
+</form>
+
+<div id="result">
+
+</div>
+
+<script>
+    function searchEmployees() {
+        var query = document.getElementById("query").value;
+        fetch("/search?query=" + query)
+            .then(response => response.json())
+            .then(data => displayResults(data))
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                displayResults([]);
+            });
+    }
+
+    function displayResults(data) {
+        var resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+            resultDiv.innerHTML = "<p class='no-results'>No results found.</p>";
+        } else {
+            var table = document.createElement("table");
+            var headerRow = table.insertRow();
+            headerRow.innerHTML = "<th>ID</th><th>Name</th><th>Phone Number</th><th>Gender</th><th>Address</th><th>Email</th><th>Designation</th><th>Salary</th><th>Joining Date</th><th>Actions</th>";
+
+            data.forEach(function(employee) {
+                var row = table.insertRow();
+                row.innerHTML = "<td>" + employee.id + "</td><td>" + employee.name + "</td><td>" + employee.phoneNumber + "</td><td>" + employee.gender + "</td><td>" + employee.address + "</td><td>" + employee.email + "</td><td>" + employee.designation + "</td><td>" + employee.salary + "</td><td>" + employee.joiningDate + "</td><td><button class='edit-button' onclick='editEmployee(" + employee.id + ")'>Edit</button> <button class='delete-button' onclick='deleteEmployee(" + employee.id + ")'>Delete</button></td>";
+            });
+
+            resultDiv.appendChild(table);
+        }
+    }
+
+    function deleteEmployee(id) {
+        id = parseInt(id);
+
+        fetch("/delete/" + id, {
+            method: "DELETE"
+        })
+        .then(response => {
+            if (response.ok) {
+                searchEmployees();
+                alert('Employee deleted successfully');
+            } else {
+                console.error('Failed to delete employee with ID ' + id);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting employee:', error);
+        });
+    }
+
+    function editEmployee(id) {
+        fetch("/update/" + id)
+            .then(response => response.json())
+            .then(employee => {
+
+                const queryParams = new URLSearchParams(employee).toString();
+
+
+                window.location.href = "/edit.html?" + queryParams;
+            })
+            .catch(error => {
+                console.error("Error fetching employee data:", error);
+            });
+    }
+</script>
+</body>
+</html>
